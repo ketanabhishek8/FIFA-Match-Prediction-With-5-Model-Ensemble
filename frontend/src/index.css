@@ -1,54 +1,62 @@
-/* Hallmark · genre: modern-minimal · macrostructure: Workbench-adapted (app, not marketing page)
- * theme: Cobalt (slate/beige variant) · accent: warm sand · tone: technical
+/* FIFA Predictor Studio · Design System
+ * Palette: Pure Black (#000000), Soft Ivory (#EAFFD0), Lime Green Accent (#B0E454)
+ * Style: Deep Black Ground, Flat Glassmorphism, Clean Precision Accents (NO GRADIENTS)
  */
 :root {
-  /* Warm-neutral palette — dark espresso slate, one sand/beige signal */
-  --color-paper:        oklch(15% 0.008 75);    /* page ground */
-  --color-paper-2:       oklch(19% 0.009 75);    /* recessed track (tabs, preview line) */
-  --color-surface:      oklch(21% 0.010 75);    /* raised panel (cards, inputs) */
-  --color-ink:          oklch(95% 0.008 80);
-  --color-ink-2:        oklch(82% 0.012 78);
-  --color-ink-muted:    oklch(64% 0.016 77);
-  --color-rule:         oklch(32% 0.014 75);
-  --color-rule-2:       oklch(41% 0.018 75);
-  --color-accent:       oklch(78% 0.075 80);
-  --color-accent-ink:   oklch(16% 0.015 75);
-  --color-focus:        oklch(82% 0.07 80);
-  --color-graphite:     oklch(9% 0.007 75);     /* deepest tier — the terminal/response moment */
-  --color-graphite-ink: oklch(93% 0.008 78);
-  --color-error:        oklch(70% 0.19 25);
+  /* Core Palette */
+  --color-black: #000000;
+  --color-surface-card: rgba(18, 18, 18, 0.75);
+  --color-surface-hover: rgba(26, 26, 26, 0.85);
+  --color-surface-dark: rgba(10, 10, 10, 0.9);
+  --color-surface-border: rgba(234, 255, 208, 0.1);
+  --color-surface-border-hover: rgba(176, 228, 84, 0.35);
 
+  /* Selective Accents */
+  --color-lime: #B0E454;
+  --color-lime-faint: rgba(176, 228, 84, 0.12);
+  --color-lime-glow: rgba(176, 228, 84, 0.25);
+
+  /* Typography */
+  --color-ivory: #EAFFD0;
+  --color-ivory-dim: rgba(234, 255, 208, 0.88);
+  --color-ivory-muted: rgba(234, 255, 208, 0.72);
+  --color-ivory-subtle: rgba(234, 255, 208, 0.35);
+
+  /* Ultra-Clear Glassmorphism (Border-only / 100% visible 3D trophy backdrop) */
+  --glass-card-bg: rgba(6, 6, 6, 0.10);
+  --glass-card-hover: rgba(14, 14, 14, 0.22);
+  --glass-border: 1px solid rgba(234, 255, 208, 0.22);
+  --glass-border-hover: 1px solid rgba(176, 228, 84, 0.6);
+  --glass-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --glass-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.55), 0 0 16px rgba(176, 228, 84, 0.2);
+  --glass-blur: blur(0px);
+
+  /* Typography Fonts */
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-body:    "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono:    "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  --space-3xs: 0.125rem;
+  /* Spacing */
   --space-2xs: 0.25rem;
-  --space-xs:  0.5rem;
-  --space-sm:  0.75rem;
-  --space-md:  1rem;
-  --space-lg:  1.5rem;
-  --space-xl:  2.5rem;
-  --space-2xl: 4rem;
-  --space-3xl: 6rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
 
-  --text-xs:   0.64rem;
-  --text-sm:   0.8rem;
-  --text-base: 1rem;
-  --text-md:   1.25rem;
-  --text-lg:   1.5625rem;
-  --text-xl:   1.9531rem;
-  --text-2xl:  2.4414rem;
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 9999px;
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-short: 180ms;
-  --dur-med: 420ms;
+  /* Transitions */
+  --dur-quick: 140ms ease-out;
+  --dur-smooth: 240ms ease-out;
 
   color-scheme: dark;
-  color: var(--color-ink-2);
+  color: var(--color-ivory);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
@@ -63,36 +71,34 @@ html, body {
 
 body {
   margin: 0;
-  background-color: var(--color-paper);
-  background-image:
-    linear-gradient(to right, oklch(100% 0 0 / 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, oklch(100% 0 0 / 0.045) 1px, transparent 1px);
-  background-size: 32px 32px;
-  background-attachment: fixed;
+  min-height: 100vh;
+  background: #000000;
+  color: var(--color-ivory);
+  font-family: var(--font-body);
 }
 
 h1, h2, h3, h4 {
-  color: var(--color-ink);
+  color: var(--color-ivory);
   font-family: var(--font-display);
   font-weight: 600;
-  font-style: normal;
   margin: 0;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 ::selection {
-  background: var(--color-accent);
-  color: var(--color-accent-ink);
+  background: var(--color-lime);
+  color: #000000;
 }
 
+/* Scrollbar */
 * {
-  scrollbar-color: var(--color-rule-2) transparent;
+  scrollbar-color: rgba(234, 255, 208, 0.18) transparent;
   scrollbar-width: thin;
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
@@ -100,23 +106,10 @@ h1, h2, h3, h4 {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-rule-2);
-  border-radius: 999px;
-  border: 2px solid var(--color-paper);
+  background: rgba(234, 255, 208, 0.16);
+  border-radius: var(--radius-pill);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-accent);
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
+  background: var(--color-lime);
 }
