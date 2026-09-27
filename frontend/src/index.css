@@ -1,0 +1,122 @@
+/* Hallmark · genre: modern-minimal · macrostructure: Workbench-adapted (app, not marketing page)
+ * theme: Cobalt (slate/beige variant) · accent: warm sand · tone: technical
+ */
+:root {
+  /* Warm-neutral palette — dark espresso slate, one sand/beige signal */
+  --color-paper:        oklch(15% 0.008 75);    /* page ground */
+  --color-paper-2:       oklch(19% 0.009 75);    /* recessed track (tabs, preview line) */
+  --color-surface:      oklch(21% 0.010 75);    /* raised panel (cards, inputs) */
+  --color-ink:          oklch(95% 0.008 80);
+  --color-ink-2:        oklch(82% 0.012 78);
+  --color-ink-muted:    oklch(64% 0.016 77);
+  --color-rule:         oklch(32% 0.014 75);
+  --color-rule-2:       oklch(41% 0.018 75);
+  --color-accent:       oklch(78% 0.075 80);
+  --color-accent-ink:   oklch(16% 0.015 75);
+  --color-focus:        oklch(82% 0.07 80);
+  --color-graphite:     oklch(9% 0.007 75);     /* deepest tier — the terminal/response moment */
+  --color-graphite-ink: oklch(93% 0.008 78);
+  --color-error:        oklch(70% 0.19 25);
+
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body:    "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
+
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+
+  --text-xs:   0.64rem;
+  --text-sm:   0.8rem;
+  --text-base: 1rem;
+  --text-md:   1.25rem;
+  --text-lg:   1.5625rem;
+  --text-xl:   1.9531rem;
+  --text-2xl:  2.4414rem;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-short: 180ms;
+  --dur-med: 420ms;
+
+  color-scheme: dark;
+  color: var(--color-ink-2);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: clip;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-paper);
+  background-image:
+    linear-gradient(to right, oklch(100% 0 0 / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(100% 0 0 / 0.045) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-attachment: fixed;
+}
+
+h1, h2, h3, h4 {
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-style: normal;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+* {
+  scrollbar-color: var(--color-rule-2) transparent;
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-rule-2);
+  border-radius: 999px;
+  border: 2px solid var(--color-paper);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

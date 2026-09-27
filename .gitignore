@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+env/
+
+# Test cache
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data (keep structure, ignore contents)
+data/raw/*
+!data/raw/.gitkeep
+data/external/*
+!data/external/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+# Unzipped copy of the Kaggle CSVs in data/raw/ -- same third-party data
+data/fifa_predictor_raw_data/
+
+# Outputs (figures are committed -- small, and report.md links them)
+outputs/models/*
+!outputs/models/.gitkeep
+
+# Export bundles: fifa_predictor_raw_data.zip repackages the gitignored Kaggle
+# CSVs from data/raw/ (31 MB, third-party data), and data_export.zip just
+# duplicates outputs/data_export/. Both are regenerable; neither belongs in git.
+outputs/*.zip
+
+# Secrets
+.env
+kaggle.json
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Frontend
+# Bare pattern: matches frontend/node_modules/ and any installed at the repo
+# root, so neither can be committed by accident.
+node_modules/
+frontend/dist/

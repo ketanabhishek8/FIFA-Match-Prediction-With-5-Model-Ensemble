@@ -1,0 +1,166 @@
+project:
+  name: fifa-match-predictor
+  random_state: 42
+
+# Scope per proposal: FIFA World Cup, player rosters 2015-2023
+data:
+  # 2026 is deliberately EXCLUDED: results.csv already contains the 2026 World
+  # Cup, and the bracket backtest (src/backtest_wc2026.py) only means anything
+  # if no 2026 match has been seen in training. 2024 comes from EA FC 24, 2025
+  # from EA FC 25 via src/data/adapters.py.
+  years: [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+  raw_dir: data/raw
+  processed_dir: data/processed
+  external_dir: data/external
+  # CONFIRMED (Aug 2026): player data comes from one Kaggle dataset per FIFA
+  # edition -- stefanoleone992/fifa-{edition}-complete-player-dataset, where
+  # edition = year - 2000 (e.g. year 2021 -> FIFA 21). Downloaded
+  # automatically by src/data/collect_players.py per configured year.
+  # Match data: martj42/international-football-results-from-1872-to-2017
+  # (slug is frozen but the dataset is actively updated well past 2017).
+  match_dataset_slug: "martj42/international-football-results-from-1872-to-2017"
+  # Widen training data beyond WC finals (97 matches) by also including WC
+  # qualifiers. Set False to reproduce the paper's finals-only baseline scope.
+  include_qualifiers: true
+
+features:
+  scaler: standard          # standard | minmax
+  use_pca: true
+  pca_variance_threshold: 0.95   # keep components explaining >= this much variance
+
+  # "all" keeps <attr>_a, <attr>_b and <attr>_diff; "diff" keeps only the
+  # difference. The three are collinear by construction (diff == a - b), so the
+  # triple costs 3x the dimensionality for no extra information about which side
+  # is stronger. Measured over 5 seeds: 78.93% +/- 1.89 with all three (163
+  # features) vs 78.66% +/- 0.60 with differences alone (55 features) -- the
+  # absolute levels buy 0.3 pp of accuracy and triple the seed-to-seed spread.
+  representation: diff
+
+  # Read squads from the FIFA edition current on the match date rather than the
+  # one labelled with the calendar year. Edition Y ships ~Sept Y-1, and 63% of
+  # World Cup matches in scope are played Sept-Dec, so a calendar-year join
+  # hands those fixtures ratings a median of 12 months old.
+  edition_aware_join: true
+
+  # Drop training rows whose weaker profile is built from fewer than this many
+  # rated players. 0 disables. Profiles are assembled from whoever EA rated, so
+  # a "team" can be 2 players: 17.9% of team-slots come from fewer than 5, and
+  # 46.5% of match rows have at least one side under 11. The model also gets
+  # squad_size_min as a feature either way, so it can discount thin rows itself.
+  min_squad_size: 0
+
+  # Hand the ensemble the match-history signal the WWR baseline runs on: Elo,
+  # the baseline's own weighted win ratio, head-to-head record and recent form.
+  # Without these the ensemble sees squad ratings only while the baseline sees
+  # results only -- they score within a point of each other while disagreeing
+  # on a third of matches, so neither dominates and the ensemble is never
+  # given what the baseline knows. Every value is computed as of the match
+  # date, so nothing sees a result that had not happened yet.
+  # See src/features/history_features.py.
+  history_features: true
+  history_form_window: 10        # matches per team in the recent-form window
+  history_elo_k: 20              # flat Elo update rate, used only when competition weighting is off
+  history_elo_home_advantage: 60 # Elo points, applied only on non-neutral ground
+  # World Football Elo weighting (eloratings.net), measured over 5 seeds:
+  #
+  #   flat K=20                    78.60% +/- 1.75   margin +3.81 pp
+  #   + competition weighting      78.26% +/- 1.27   margin +3.48 pp   (-0.33)
+  #   + goal-difference weighting  78.93% +/- 1.89   margin +4.15 pp   (+0.33)
+  #   + both                       78.13% +/- 1.99   margin +3.34 pp   (-0.47)
+  #
+  # So competition weighting is OFF despite being the textbook choice. Setting K
+  # from the tournament (World Cup 60 ... friendly 20) makes every rating move
+  # faster and so more reactive to recent results -- which is what form_win and
+  # form_gd already measure. What the ensemble wants from Elo is the stable
+  # long-run reputation a flat K gives it. The implementation stays available;
+  # flip this to true to re-measure.
+  history_elo_competition_weighted: false
+  # Margin of victory, with diminishing returns, is kept: a 4-0 is stronger
+  # evidence than a 1-0 and that is not something form_gd captures per match.
+  history_elo_goal_difference_weighted: true
+
+  # Append a side-swapped copy of every TRAINING row (_a <-> _b, _diff negated,
+  # label flipped). World Cup matches are played on neutral ground but
+  # results.csv still lists one team as "home", and 61% of rows are home wins,
+  # so without mirroring the model learns argument order as if it were signal.
+  # Mirroring happens after the split, never before -- a row and its mirror
+  # landing on opposite sides of the split would be direct leakage.
+  mirror_training_rows: true
+
+# Weighted Win Ratio baseline, per paper Section IV
+baseline:
+  min_head_to_head_matches: 5    # 75th percentile threshold from the paper
+  wwr_m: 10                      # credibility constant m in the WWR formula (src/models/baseline.py).
+                                 # Never swept -- left at the value the project started with.
+
+models:
+  test_size: 0.2
+  cv_folds: 5
+  classifiers:
+    - logistic_regression
+    - random_forest
+    - xgboost
+    - adaboost
+    - knn
+
+# Scoreline model (src/models/score_model.py): two Poisson regressions over the
+# SAME feature matrix the classifier uses, combined into a distribution over
+# scorelines. Run with `python -m src.score_pipeline`.
+#
+# Measured over 5 seeds on development data, Sept 2026:
+#
+#   derived win-acc   79.18% +/- 2.41   vs 78.29% +/- 1.62 (untuned ensemble)
+#   RPS               0.1683            vs 0.2283 league-average floor
+#   exact scoreline   15.3%             vs 10.4% modal floor
+#   goal MAE          0.87              vs 1.01 floor
+#
+# The point of the first line: predicting goals costs nothing on the original
+# binary task, so this generalises the classifier rather than sitting beside it
+# -- and it also represents the ~24% of matches that are draws, which the binary
+# framing structurally cannot express. Note `data.years` and the 2025 holdout
+# apply identically here; the two tasks differ only in the target.
+score_model:
+  enabled: true
+  max_goals: 10          # grid is 0..max_goals per side; mass beyond is renormalised away
+  alpha: 0.001           # L2 penalty on both Poisson regressions
+
+  # Dixon-Coles low-score correction. Independent Poisson under-predicts draws
+  # (21.8% vs 24.2% actual) because it cannot represent dependence between the
+  # two scores at low scorelines. Fitted rho = -0.066 +/- 0.007, stable across
+  # seeds and squarely in the published football range.
+  #
+  # KEEP IT, but for calibration, not for a headline: it closes about half the
+  # draw gap and is better on 5/5 seeds on BOTH RPS and log-loss -- by 0.0001
+  # and 0.0013 respectively. It cannot change win-accuracy at all (it is
+  # side-symmetric, so it never moves a home-vs-away comparison), and it costs
+  # ~0.3 pp of exact-scoreline accuracy because it makes 0-0 and 1-1 the modal
+  # prediction more often, and those hit less often than 1-0.
+  #
+  # The ~1.1 pp of draw gap it does NOT close is not a low-score-dependence
+  # problem and needs a different fix; don't expect more from rho.
+  dixon_coles: true
+  rho_bounds: [-0.35, 0.35]   # search range, intersected with the feasibility constraint
+  rho_grid_points: 1401       # deterministic grid search; only low-score rows inform rho
+
+evaluation:
+  # A match is "high-scoring" if combined goals >= this threshold. Never swept;
+  # 3 is the conventional over/under-2.5 line, and it splits the in-scope
+  # decisive matches 59% / 41%, which is a usable split for the reported
+  # high/low accuracy breakdown.
+  high_scoring_goal_threshold: 3
+  output_dir: outputs
+
+  # Years withheld from development entirely. `build_match_dataset()` drops them,
+  # so nothing in these years reaches feature selection, hyperparameter tuning,
+  # seed-variance reporting, the figures, or the served model -- the only way to
+  # see them is `python -m src.holdout`, which scores them once.
+  #
+  # Why this exists: roughly fifteen configurations were compared against the
+  # same five random splits, keeping whichever scored higher each time. That is
+  # selection on the test set, and it accumulates -- the random-split number
+  # drifted up 78.9% -> 80.3% while an untuned temporal split went 79.7% ->
+  # 79.5%, i.e. the last round of "gains" did not replicate. A number that has
+  # never been optimised against is the only one worth publishing.
+  #
+  # Set to [] to train on everything (and lose the guarantee).
+  holdout_years: [2025]

@@ -1,0 +1,46 @@
+group,source_column,kept_in_team_profile,notes
+Metadata,short_name,no,"non-numeric identifier, not aggregated into the profile mean"
+Metadata,long_name,no,"non-numeric identifier, not aggregated into the profile mean"
+Metadata,age,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Metadata,height_cm,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Metadata,weight_kg,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Metadata,nationality_name,no,"non-numeric identifier, not aggregated into the profile mean"
+Metadata,club_name,no,"non-numeric identifier, not aggregated into the profile mean"
+Metadata,preferred_foot,no,"non-numeric identifier, not aggregated into the profile mean"
+Metadata,player_positions,no,"non-numeric identifier, not aggregated into the profile mean"
+Metadata,nation_position,no,used to select real national squads; dropped by completeness filter afterwards
+Metadata,nation_jersey_number,no,not used; dropped by completeness filter (>20% missing)
+Attacking,attacking_crossing,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Attacking,attacking_finishing,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Attacking,attacking_heading_accuracy,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Attacking,attacking_short_passing,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Attacking,attacking_volleys,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Skill,skill_dribbling,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Skill,skill_curve,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Skill,skill_fk_accuracy,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Skill,skill_long_passing,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Skill,skill_ball_control,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Movement,movement_acceleration,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Movement,movement_sprint_speed,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Movement,movement_agility,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Movement,movement_reactions,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Movement,movement_balance,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Power,power_shot_power,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Power,power_jumping,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Power,power_stamina,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Power,power_strength,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Power,power_long_shots,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Mentality,mentality_aggression,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Mentality,mentality_interceptions,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Mentality,mentality_positioning,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Mentality,mentality_vision,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Mentality,mentality_penalties,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Mentality,mentality_composure,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Defending,defending_marking_awareness,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Defending,defending_standing_tackle,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Defending,defending_sliding_tackle,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Goalkeeping,goalkeeping_diving,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Goalkeeping,goalkeeping_handling,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Goalkeeping,goalkeeping_kicking,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Goalkeeping,goalkeeping_positioning,yes,squad mean -> profile attribute -> _a / _b / _diff features
+Goalkeeping,goalkeeping_reflexes,yes,squad mean -> profile attribute -> _a / _b / _diff features
