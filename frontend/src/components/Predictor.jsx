@@ -75,19 +75,19 @@ export default function Predictor() {
         </div>
         <div className="arena-badge">
           <span className="badge-pulse" />
-          <span>FIFA In-Engine</span>
+          <span>5-Model Ensemble</span>
         </div>
       </div>
 
       <form className="predict-form" onSubmit={handlePredict}>
         <div className="team-select-wrapper">
           <TeamCombobox
-            label="Home / Squad A"
+            label="Team A"
             teams={teams}
             value={teamA}
             onChange={setTeamA}
             excluded={teamB}
-            excludedNote="Picked as Squad B"
+            excludedNote="picked as Team B"
           />
         </div>
 
@@ -97,12 +97,12 @@ export default function Predictor() {
 
         <div className="team-select-wrapper">
           <TeamCombobox
-            label="Away / Squad B"
+            label="Team B"
             teams={teams}
             value={teamB}
             onChange={setTeamB}
             excluded={teamA}
-            excludedNote="Picked as Squad A"
+            excludedNote="picked as Team A"
           />
         </div>
 
@@ -135,7 +135,9 @@ export default function Predictor() {
             <span className="switch-text">
               <strong>Neutral Venue</strong>
               <span className="switch-sub">
-                {neutral ? 'Symmetric (World Cup Final format)' : 'Team A Home Advantage (+62.8% win baseline)'}
+                {neutral
+                  ? 'Scored both ways and averaged, so team order doesn’t matter (World Cup default)'
+                  : 'Team A is the home side, which the model favours (62.8% of non-neutral matches are home wins)'}
               </span>
             </span>
           </label>
@@ -158,6 +160,12 @@ export default function Predictor() {
           </button>
         </div>
       </form>
+
+      <p className="card-desc">
+        The ensemble is trained on World Cup matches from 2015–2024 (2025 is held out for
+        testing) — the edition year only picks which squad ratings describe the two teams.
+        Latest shared edition by default.
+      </p>
 
       {teamA && teamB && years.length > 0 && (
         <div className="request-terminal-badge">
@@ -233,6 +241,8 @@ export default function Predictor() {
             const top = s.most_likely
             const topPct = Math.round(top.probability * 100)
             const op = s.outcome_probability
+            // Round once and give the remainder to the last segment, so the
+            // three numbers always add to 100 in the legend.
             const pctA = Math.round(op.team_a * 100)
             const pctDraw = Math.round(op.draw * 100)
             const pctB = 100 - pctA - pctDraw
@@ -253,7 +263,8 @@ export default function Predictor() {
                   <div className="score-caption">
                     <span className="score-chance-chip">{topPct}% Most Likely Exact Scoreline</span>
                     <p className="uncertainty-note">
-                      Goal distributions modeled with bivariate Poisson and negative correlation for low scores.
+                      Football scorelines are genuinely uncertain — even the best guess is a long way from a
+                      safe bet. The three-way split below is the firmer answer.
                     </p>
                   </div>
                 </div>
@@ -272,7 +283,11 @@ export default function Predictor() {
                   </div>
                 </div>
 
-                <div className="three-way-probability-bar">
+                <div
+                  className="three-way-probability-bar"
+                  role="img"
+                  aria-label={`${result.team_a} ${pctA}%, draw ${pctDraw}%, ${result.team_b} ${pctB}%`}
+                >
                   <div className="three-seg seg-a" style={{ width: `${pctA}%` }} title={`${result.team_a}: ${pctA}%`} />
                   <div className="three-seg seg-draw" style={{ width: `${pctDraw}%` }} title={`Draw: ${pctDraw}%`} />
                   <div className="three-seg seg-b" style={{ width: `${pctB}%` }} title={`${result.team_b}: ${pctB}%`} />
@@ -301,7 +316,8 @@ export default function Predictor() {
                     <span className="notice-tag">Notice:</span>
                     <p>
                       The scoreline goal-distribution model favours <strong>{s.favours}</strong>, while the
-                      majority-vote ensemble picks <strong>{result.winner}</strong>.
+                      majority-vote ensemble picks <strong>{result.winner}</strong>. They are fit to different
+                      targets — goals scored versus who won — so they can disagree on close matches.
                     </p>
                   </div>
                 )}

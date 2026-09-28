@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'
 
 /**
  * 3D FIFA World Cup Trophy on a rotating circular pedestal in a dark scene.
@@ -8,6 +9,11 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
  * - Natural 3D model textures and metallic shading under spotlight
  * - Rotating circular metallic turntable surface with Lime Green neon tracks
  * - Responsive cursor flow animation with smooth inertia
+ *
+ * The model is meshopt-compressed with WebP textures embedded (see
+ * frontend/public/models/README.md), so it needs the meshopt decoder and no
+ * separate texture files. Honours prefers-reduced-motion by rendering a still
+ * frame instead of animating.
  */
 export default function TrophyScene() {
   const mountRef = useRef(null)
@@ -15,6 +21,11 @@ export default function TrophyScene() {
   useEffect(() => {
     const container = mountRef.current
     if (!container) return
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    // Set on unmount, so a model that finishes loading afterwards is dropped
+    // instead of being added to a scene that has already been disposed.
+    let disposed = false
 
     // 1. Scene & Camera Setup
     const scene = new THREE.Scene()
@@ -40,16 +51,16 @@ export default function TrophyScene() {
     const trophyGroup = new THREE.Group()
     scene.add(trophyGroup)
 
-    const textureLoader = new THREE.TextureLoader()
-    const baseColorMap = textureLoader.load('/textures/world+cup+trophy_basecolor.jpg_0.jpeg')
-    baseColorMap.colorSpace = THREE.SRGBColorSpace
-    const normalMap = textureLoader.load('/textures/world+cup+trophy_normal.jpg_2.jpeg')
-
     const loader = new GLTFLoader()
+    loader.setMeshoptDecoder(MeshoptDecoder)
     loader.load(
       '/models/trophy.glb',
       (gltf) => {
         const model = gltf.scene
+        if (disposed) {
+          disposeObject(model)
+          return
+        }
 
         // Normalize size and center the model
         const box = new THREE.Box3().setFromObject(model)
@@ -70,12 +81,6 @@ export default function TrophyScene() {
             child.castShadow = true
             child.receiveShadow = true
             if (child.material) {
-              if (!child.material.map) {
-                child.material.map = baseColorMap
-              }
-              if (!child.material.normalMap) {
-                child.material.normalMap = normalMap
-              }
               child.material.metalness = Math.max(child.material.metalness ?? 0, 0.85)
               child.material.roughness = Math.min(child.material.roughness ?? 0.35, 0.35)
               child.material.needsUpdate = true
@@ -84,6 +89,7 @@ export default function TrophyScene() {
         })
 
         trophyGroup.add(model)
+        if (reduceMotion) renderer.render(scene, camera)
       },
       undefined,
       (error) => {
@@ -196,7 +202,7 @@ export default function TrophyScene() {
       targetRotationX = ny * 0.28
     }
 
-    window.addEventListener('mousemove', onMouseMove, { passive: true })
+    if (!reduceMotion) window.addEventListener('mousemove', onMouseMove, { passive: true })
 
     // 6. Render Loop
     let animationFrameId
@@ -222,7 +228,8 @@ export default function TrophyScene() {
 
       renderer.render(scene, camera)
     }
-    animate(performance.now())
+    if (reduceMotion) renderer.render(scene, camera)
+    else animate(performance.now())
 
     // 7. Resize Handler
     const onResize = () => {
@@ -230,17 +237,20 @@ export default function TrophyScene() {
       camera.updateProjectionMatrix()
       renderer.setSize(window.innerWidth, window.innerHeight)
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+      if (reduceMotion) renderer.render(scene, camera)
     }
     window.addEventListener('resize', onResize)
 
     // Cleanup
     return () => {
+      disposed = true
       cancelAnimationFrame(animationFrameId)
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('resize', onResize)
       if (container && renderer.domElement) {
         container.removeChild(renderer.domElement)
       }
+      disposeObject(scene)
       renderer.dispose()
     }
   }, [])
@@ -252,4 +262,19 @@ export default function TrophyScene() {
       aria-hidden="true"
     />
   )
+}
+
+/** Free the GPU buffers and textures held by everything under `root`. */
+function disposeObject(root) {
+  root.traverse((child) => {
+    child.geometry?.dispose()
+    const materials = Array.isArray(child.material) ? child.material : [child.material]
+    for (const material of materials) {
+      if (!material) continue
+      for (const value of Object.values(material)) {
+        if (value?.isTexture) value.dispose()
+      }
+      material.dispose()
+    }
+  })
 }
