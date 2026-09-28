@@ -1,0 +1,30 @@
+# Local development: the runtime set in requirements.txt plus the tools for
+# collecting data, running the pipeline, drawing figures, testing, and serving
+# the API locally. Install this one on your machine; Vercel installs only
+# requirements.txt.
+-r requirements.txt
+
+# Local API server (Vercel runs the app without it)
+uvicorn[standard]>=0.29
+
+# Visualization
+matplotlib>=3.7
+seaborn>=0.12
+
+# Notebooks
+jupyter>=1.0
+ipykernel>=6.25
+
+# Data sourcing
+kaggle>=1.6
+
+# Utilities
+tqdm>=4.66
+
+# Testing
+pytest>=7.4
+httpx>=0.24
+
+# Optional — future GNN extension (see literature survey gap #4), not required for v1
+# torch
+# torch-geometric

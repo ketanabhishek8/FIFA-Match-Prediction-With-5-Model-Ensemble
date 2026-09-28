@@ -117,9 +117,10 @@ an end-to-end API smoke test.
   a request that somehow lands before `state` is populated gets a bare
   `KeyError` → 500 rather than a friendly "still training" response, and the
   frontend has no signal to show a real progress state.
-- **CORS is wide open** (`allow_origins=["*"]`, all methods/headers). Fine for
-  local development; would need tightening to the actual frontend origin
-  before this is hosted anywhere reachable.
+- **CORS is wide open locally** (`allow_origins=["*"]`, all methods/headers).
+  The Vercel deployment doesn't add the middleware at all — site and API
+  share one origin there — so this only matters if the API is ever hosted
+  separately from the frontend.
 - **No cache eviction in `outputs/models/`.** Every distinct config change
   leaves another multi-MB `.joblib` bundle behind; nothing prunes stale ones.
   These are unpickled with `joblib.load` on server start — only ever put
@@ -168,4 +169,5 @@ an end-to-end API smoke test.
   working directory.
 - Add cache eviction (or a `--clear-cache` flag) for `outputs/models/`.
 - Pin `scipy` and `joblib` explicitly in `requirements.txt`.
-- Tighten CORS to the actual frontend origin before any non-local deployment.
+- Tighten CORS to the actual frontend origin if the API is ever hosted apart
+  from the frontend.

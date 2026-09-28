@@ -2,11 +2,19 @@
 5-seed train/eval) is expensive, so we run it once and cache the result --
 subsequent server starts load from disk unless the training-relevant config
 changed.
+
+A deployment has neither the training data nor time to train (it takes
+minutes), so when `MODEL_BUNDLE_URL` is set the bundle is downloaded instead --
+see `load_bundle` and docs/DEPLOYMENT.md.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import os
+import tempfile
+import urllib.request
+from pathlib import Path
 
 import joblib
 
@@ -32,6 +40,65 @@ def _cache_key(cfg: dict, seeds: list[int]) -> str:
     # silently keeps serving the previous seed's results.
     relevant["random_state"] = cfg["project"]["random_state"]
     return hashlib.sha256(json.dumps(relevant, sort_keys=True).encode()).hexdigest()[:16]
+
+
+MODEL_BUNDLE_URL_ENV = "MODEL_BUNDLE_URL"
+
+
+def load_bundle(cfg: dict, seeds: list[int]) -> dict:
+    """The model bundle the API serves.
+
+    With `MODEL_BUNDLE_URL` set (the deployed API), download it and check it
+    against `serving.model_bundle_sha256`; otherwise train or load the local
+    cache as before.
+    """
+    url = os.environ.get(MODEL_BUNDLE_URL_ENV)
+    if url:
+        return joblib.load(_fetch_bundle(url, cfg["serving"]["model_bundle_sha256"]))
+    if os.environ.get("VERCEL"):
+        # Training here would fail anyway -- data/raw is not in the repo -- so
+        # say what is actually missing instead of a FileNotFoundError.
+        raise RuntimeError(
+            f"{MODEL_BUNDLE_URL_ENV} is not set. The deployed API downloads its trained "
+            "model rather than training one; see docs/DEPLOYMENT.md."
+        )
+    return load_or_train(cfg, seeds)
+
+
+def _fetch_bundle(url: str, expected_sha256: str) -> Path:
+    """Download the bundle to the temp dir once per instance, refusing any file
+    whose SHA-256 differs from the one pinned in config.
+
+    The check is not optional: a bundle is a pickle, and unpickling runs code,
+    so a replaced or corrupted file must never reach `joblib.load`.
+    """
+    target = Path(tempfile.gettempdir()) / f"model-bundle-{expected_sha256[:16]}.joblib"
+    if target.exists() and _sha256(target) == expected_sha256:
+        return target
+
+    partial = target.with_suffix(".part")
+    digest = hashlib.sha256()
+    with urllib.request.urlopen(url, timeout=60) as response, partial.open("wb") as out:
+        while chunk := response.read(1 << 20):
+            digest.update(chunk)
+            out.write(chunk)
+    if digest.hexdigest() != expected_sha256:
+        partial.unlink(missing_ok=True)
+        raise RuntimeError(
+            f"Model bundle from {MODEL_BUNDLE_URL_ENV} has SHA-256 {digest.hexdigest()}, "
+            f"expected {expected_sha256} (config.yaml serving.model_bundle_sha256). "
+            "Refusing to load it."
+        )
+    partial.replace(target)
+    return target
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        while chunk := f.read(1 << 20):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def load_or_train(cfg: dict, seeds: list[int]) -> dict:

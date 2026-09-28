@@ -18,7 +18,9 @@ unless you pass `--backend-only`.
 
 ### What the Python dependencies are for
 
-`requirements.txt` groups them, but in short: **pandas/numpy** for the data
+`requirements.txt` holds only what the API needs at runtime — it is what the
+Vercel deployment installs ([DEPLOYMENT.md](DEPLOYMENT.md)) — and
+`requirements-dev.txt` adds everything else on top of it. In short: **pandas/numpy** for the data
 frames the whole pipeline passes around; **scikit-learn** for the five
 classifiers, `GridSearchCV`, scaling and PCA, plus **xgboost** for the one
 model it doesn't provide; **scipy** for the distributions behind the scoreline
@@ -37,7 +39,7 @@ and `recharts` for the dashboard charts, with `oxlint` for linting. See
 ```bash
 python -m venv venv             # python3.10+ -- see Prerequisites
 source venv/bin/activate        # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
 Data comes from Kaggle. Place your API token at `~/.kaggle/kaggle.json`

@@ -64,7 +64,7 @@ def check_environment() -> bool:
             "      python -m venv venv\n"
             "      venv\\Scripts\\activate          (Windows)\n"
             "      source venv/bin/activate       (macOS/Linux)\n"
-            "      pip install -r requirements.txt\n"
+            "      pip install -r requirements-dev.txt\n"
             "  then re-run this script with that venv's python."
         )
         return False

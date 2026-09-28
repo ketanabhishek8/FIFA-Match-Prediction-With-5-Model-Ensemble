@@ -88,7 +88,7 @@ def backend_python() -> str:
     print(f"       ...and there is no usable venv at {VENV_PYTHON}")
     print("       Create the venv and install the deps, then re-run:")
     print("         python -m venv venv")
-    print("         pip install -r requirements.txt")
+    print("         pip install -r requirements-dev.txt")
     sys.exit(1)
 
 

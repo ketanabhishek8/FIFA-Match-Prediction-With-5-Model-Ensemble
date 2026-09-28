@@ -11,7 +11,10 @@ python -m uvicorn api.main:app --reload
 
 Interactive docs (Swagger UI) at `http://localhost:8000/docs` once running.
 The frontend never calls this origin directly — it goes through the Vite dev
-proxy at `/api/*` (see [FRONTEND.md](FRONTEND.md)).
+proxy at `/api/*` (see [FRONTEND.md](FRONTEND.md)). Every endpoint is also
+served under an `/api` prefix (`/api/teams`, ...), which is how requests reach
+it on Vercel, where the site and API share one origin
+([DEPLOYMENT.md](DEPLOYMENT.md)).
 
 ## Startup behavior
 
@@ -35,7 +38,9 @@ unhandled 500), not a clean "still starting" response — see
 [LIMITATIONS.md](LIMITATIONS.md#engineering--api).
 
 CORS is wide open (`allow_origins=["*"]`, all methods/headers) — fine for
-local development, not configured for any other deployment.
+local development. On Vercel (`VERCEL` set) the middleware isn't added: the site
+and API share an origin there, and top-level middleware would stop Vercel
+serving the frontend from its CDN.
 
 ## `GET /teams`
 

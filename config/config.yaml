@@ -164,3 +164,12 @@ evaluation:
   #
   # Set to [] to train on everything (and lose the guarantee).
   holdout_years: [2025]
+
+# Read by the API only, never by training, so it is not part of the model cache
+# key (api/model_cache.CACHE_KEY_SECTIONS).
+serving:
+  # SHA-256 of the model bundle the deployed API downloads from MODEL_BUNDLE_URL
+  # (docs/DEPLOYMENT.md). A bundle is a pickle and unpickling runs code, so the
+  # API refuses any download that doesn't match. After retraining, upload the
+  # new bundle and update this value in the same commit.
+  model_bundle_sha256: 25756b3220608c3116b505f4294108dec8ccb9679da303002076cad34ef3e435

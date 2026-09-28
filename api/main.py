@@ -1,18 +1,23 @@
 """FastAPI backend for the FIFA match predictor frontend.
 
 Run with: uvicorn api.main:app --reload
+
+On Vercel the app is loaded through the root `app.py` and also serves the built
+frontend; see docs/DEPLOYMENT.md.
 """
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import numpy as np
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sklearn.metrics import confusion_matrix, roc_curve
 
-from api.model_cache import load_or_train
+from api.model_cache import load_bundle
 from src.config import load_config
 from src.features.build_features import build_single_match_features
 from src.models.score_model import outcome_proba_from_grid, scoreline_grid
@@ -31,7 +36,7 @@ async def lifespan(app: FastAPI):
             f"one of the hardcoded evaluation SEEDS {SEEDS} (api/main.py) so a default "
             "report exists to serve -- add it to SEEDS or pick one of the existing values."
         )
-    bundle = load_or_train(cfg, SEEDS)
+    bundle = load_bundle(cfg, SEEDS)
     state["profiles"] = bundle["profiles"]
     state["reports_by_seed"] = bundle["reports_by_seed"]
     state["default_seed"] = bundle["default_seed"]
@@ -48,9 +53,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="FIFA Match Predictor API", lifespan=lifespan)
-app.add_middleware(
-    CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
-)
+router = APIRouter()
+
+# Local development only. On Vercel the site and the API share one origin, so
+# CORS is unnecessary there -- and any top-level middleware makes Vercel serve
+# the built frontend through this function instead of from its CDN.
+if not os.environ.get("VERCEL"):
+    app.add_middleware(
+        CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
+    )
 
 
 class PredictRequest(BaseModel):
@@ -84,7 +95,7 @@ def _latest_shared_year(team_a: str, team_b: str) -> int:
     return int(max(shared))
 
 
-@app.get("/teams")
+@router.get("/teams")
 def teams() -> list[dict]:
     profiles = state["profiles"]
     by_team: dict[str, list[int]] = {}
@@ -180,7 +191,7 @@ def _score_prediction(team_a: str, team_b: str, year: int, neutral: bool,
     }
 
 
-@app.post("/predict")
+@router.post("/predict")
 def predict(req: PredictRequest) -> dict:
     if req.team_a == req.team_b:
         raise HTTPException(status_code=400, detail="Pick two different teams.")
@@ -263,7 +274,7 @@ def _score_evaluation() -> dict | None:
     }
 
 
-@app.get("/evaluation")
+@router.get("/evaluation")
 def evaluation() -> dict:
     report = state["default_report"]
     attrs = report.attrs
@@ -309,3 +320,16 @@ def evaluation() -> dict:
             "n_pca_components": int(len(pca_variance)) if pca_variance is not None else None,
         },
     }
+
+
+# The frontend calls /api/*. Locally the Vite dev proxy strips that prefix before
+# forwarding, so the bare paths are what it reaches; on Vercel requests arrive
+# with the prefix intact. Serving both keeps the two setups interchangeable.
+app.include_router(router)
+app.include_router(router, prefix="/api")
+
+# The built React app (`npm run build` in frontend/), when it exists: always on
+# Vercel, whose build step produces it; locally only if you built it yourself.
+# Registered last and at low priority, so every API route above wins.
+if Path("frontend/dist").is_dir():
+    app.frontend("/", directory="frontend/dist")

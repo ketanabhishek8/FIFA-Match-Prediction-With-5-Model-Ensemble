@@ -26,6 +26,7 @@ This README covers the project's idea, methodology, and results. For code-level 
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) — environment setup, running tests/pipeline/API, config reference.
 - [docs/API.md](docs/API.md) — the FastAPI endpoints (`/teams`, `/predict`, `/evaluation`): request/response shapes and error modes.
 - [docs/FRONTEND.md](docs/FRONTEND.md) — the React app's components, API contract, and data flow.
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — deploying to Vercel, with the trained model served from Supabase Storage.
 - [docs/LIMITATIONS.md](docs/LIMITATIONS.md) — testing gaps, known limitations, and future-improvement ideas.
 
 ## Project structure
@@ -72,8 +73,10 @@ This README covers the project's idea, methodology, and results. For code-level 
 ├── CONTEXT/                  # the paper, the proposal, the literature survey
 ├── run_checks.py             # smoke test: env → data → unit tests → pipeline
 ├── start.py / stop.py        # start/stop backend + frontend together
+├── app.py / vercel.json      # Vercel entrypoint and config (docs/DEPLOYMENT.md)
 ├── CODE_REVIEW.md            # historical line-by-line review (see docs/LIMITATIONS.md)
-└── requirements.txt
+├── requirements.txt          # runtime dependencies (what the deployment installs)
+└── requirements-dev.txt      # + tools for the pipeline, figures, tests, local server
 ```
 
 ## Web app
@@ -131,7 +134,7 @@ dependency is for.
 ```bash
 python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
 If pulling datasets from Kaggle, place your API token at `~/.kaggle/kaggle.json`
